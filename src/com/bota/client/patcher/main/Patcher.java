@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -84,47 +83,45 @@ public class Patcher {
 	}
 	public static void main(String[] args) throws IOException {
 		Properties configProperties = loadConfig();
+		
+		if (!new File("files").exists())
+			new File("files").mkdir();
+		
 		String serverURL = configProperties.getProperty("server.protocol") + "://" + configProperties.getProperty("server.host") + ":" + configProperties.getProperty("server.port") + "/";
 		Map<String, String> serverHashMap = getServerHash(serverURL + "hash");
-		if (new File("files").exists()) {
-			Map<String, String> localHashMap = getLocalHash();
 
-			Object[] localFilesObjectArray = localHashMap.keySet().toArray();
-			Object[] serverFilesObjectArray = serverHashMap.keySet().toArray();
+		Map<String, String> localHashMap = getLocalHash();
 
-			String[] localFilesArray = Arrays.copyOf(localFilesObjectArray, localFilesObjectArray.length, String[].class);
-			String[] serverFilesArray = Arrays.copyOf(serverFilesObjectArray, serverFilesObjectArray.length, String[].class);
-			List<String> localFiles = Arrays.asList(localFilesArray);
-			List<String> serverFiles = Arrays.asList(serverFilesArray);
+		Object[] localFilesObjectArray = localHashMap.keySet().toArray();
+		Object[] serverFilesObjectArray = serverHashMap.keySet().toArray();
 
-			ArrayList<String> targetFiles = new ArrayList<String>();
-			for (String file : serverFiles) {
-				if (!localFiles.contains(file)) {
-					System.out.println("File not found: " + file);
-					targetFiles.add(file);
-				}
+		String[] localFilesArray = Arrays.copyOf(localFilesObjectArray, localFilesObjectArray.length, String[].class);
+		String[] serverFilesArray = Arrays.copyOf(serverFilesObjectArray, serverFilesObjectArray.length, String[].class);
+		List<String> localFiles = Arrays.asList(localFilesArray);
+		List<String> serverFiles = Arrays.asList(serverFilesArray);
+
+		ArrayList<String> targetFiles = new ArrayList<String>();
+		for (String file : serverFiles) {
+			if (!localFiles.contains(file)) {
+				System.out.println("File not found: " + file);
+				targetFiles.add(file);
 			}
-			for (String file : serverFiles) {
-				if (targetFiles.contains(file))
-					break;
-				String localHash = localHashMap.get(file);
-				String serverHash =  serverHashMap.get(file);
+		}
+		for (String file : serverFiles) {
+			if (targetFiles.contains(file))
+				break;
+			String localHash = localHashMap.get(file);
+			String serverHash =  serverHashMap.get(file);
 
-				if (!localHash.equals(serverHash)) {
-					System.out.println("Outdated file: " + file);
-					System.out.println(localHash);
-					System.out.println(serverHash);
-					targetFiles.add(file);
-				}
+			if (!localHash.equals(serverHash)) {
+				System.out.println("Outdated file: " + file);
+				System.out.println(localHash);
+				System.out.println(serverHash);
+				targetFiles.add(file);
 			}
-			downloadFiles(targetFiles.toArray(), serverURL);
 		}
-		else {
-			System.out.println("Fetching all files from server.");
-			Set<String> keys = serverHashMap.keySet();
-			Object[] files = keys.toArray();
-			downloadFiles(files, serverURL);
-		}
+		downloadFiles(targetFiles.toArray(), serverURL);
+
 		System.out.println("All files up to date.");
 	}
 
