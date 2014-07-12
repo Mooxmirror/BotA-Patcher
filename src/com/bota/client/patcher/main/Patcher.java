@@ -115,8 +115,6 @@ public class Patcher {
 
 			if (!localHash.equals(serverHash)) {
 				System.out.println("Outdated file: " + file);
-				System.out.println(localHash);
-				System.out.println(serverHash);
 				targetFiles.add(file);
 			}
 		}
