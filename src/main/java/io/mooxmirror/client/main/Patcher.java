@@ -1,4 +1,4 @@
-package com.bota.client.patcher.main;
+package io.mooxmirror.client.main; 
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.Properties;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
-import com.bota.client.patcher.util.PathUtil;
+import io.mooxmirror.client.util.PathUtil;
 
 public class Patcher {
 
@@ -49,13 +50,8 @@ public class Patcher {
 		return hashMap;
 	}
 	public static Properties loadConfig() throws IOException {
-		File configFile = new File("config.properties");
-		if (!configFile.exists()) {
-			configFile.createNewFile();
-		}
-		FileInputStream configInputStream = new FileInputStream(configFile);
 		Properties configProperties = new Properties();
-		configProperties.load(configInputStream);
+		configProperties.load(Patcher.class.getClassLoader().getResourceAsStream("config.properties"));
 
 		if (!configProperties.containsKey("server.port"))
 			configProperties.put("server.port", "80");
@@ -63,17 +59,16 @@ public class Patcher {
 			configProperties.put("server.protocol", "http");
 		if (!configProperties.containsKey("server.host"))
 			configProperties.put("server.host", "localhost");
-
-		FileOutputStream configOutputStream = new FileOutputStream(configFile);
-		configProperties.store(configOutputStream, "BotA Game Patcher Properties File");
+		if (!configProperties.containsKey("autorun"))
+			configProperties.put("autorun", "");
 
 		return configProperties;
 
 	}
 	public static void downloadFiles(Object[] sources, String baseURL) throws IOException {
 		for (int i = 0; i < sources.length; i++) {
-			System.out.println("Downloading file: " + baseURL + (String) sources[i]);
-			URL website = new URL(baseURL + (String) sources[i]);
+			URL website = new URL(baseURL + ((String) sources[i]).replaceAll(" ", "%20"));
+			System.out.println("Downloading file: " + website.toString());
 			ReadableByteChannel rbc = Channels.newChannel(website.openStream());
 			new File((String) sources[i]).getParentFile().mkdirs();
 			try (FileOutputStream fos = new FileOutputStream((String) sources[i])) {
@@ -121,6 +116,7 @@ public class Patcher {
 		downloadFiles(targetFiles.toArray(), serverURL);
 
 		System.out.println("All files up to date.");
+		Process process = new ProcessBuilder(configProperties.getProperty("autorun")).start();
 	}
 
 }

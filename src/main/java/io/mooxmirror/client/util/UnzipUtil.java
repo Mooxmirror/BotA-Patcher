@@ -1,4 +1,4 @@
-package com.bota.client.patcher.util;
+package io.mooxmirror.client.util; 
 
 import java.io.BufferedOutputStream;
 import java.io.File;
